@@ -10,10 +10,12 @@ pub fn vuln_diff_extractors(
 ) -> List(String) {
   case list.reverse(vulnerabilities_list) {
     [] -> []
-    [latest, ..prev_rev] ->
-      // 最新にあり、過去に一度もないCVE IDのみ残す
-      list.filter(latest, fn(line) {
-        !set.contains(set.from_list(list.flatten(prev_rev)), line)
-      })
+    [latest, ..prev_rev] -> {
+      // 過去のデータを一度だけSetに変換（O(n)）
+      let prev_set = set.from_list(list.flatten(prev_rev))
+
+      // 最新にあり、過去に一度もないCVE IDのみ残す（O(n)）
+      list.filter(latest, fn(line) { !set.contains(prev_set, line) })
+    }
   }
 }
