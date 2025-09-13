@@ -1,5 +1,4 @@
-// fetch OSV data from gs://osv-vulnerabilities/modified_id.csv 4 hours ago
-// and save it to a local file
+// fetch OSV data from https://storage.googleapis.com/osv-vulnerabilities/modified_id.csv
 import gleam/http/request
 import gleam/httpc
 import gleam/result
