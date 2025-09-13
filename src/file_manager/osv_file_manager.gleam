@@ -15,7 +15,14 @@ pub fn osv_file_manager(file_body: String) -> Result(Nil, String) {
     |> fn(time) { string.replace(time, ":", "_") }
     |> fn(time) { string.replace(time, "+", "Z") }
 
-  let file_name: String = filepath.join("osv_vulnerabilities", now <> ".csv")
+  let dir = "osv_vulnerabilities"
+  let file_name: String = filepath.join(dir, now <> ".csv")
+
+  let assert Ok(_) =
+    simplifile.create_directory_all(dir)
+    |> result.map_error(fn(error) {
+      "Failed to create directory " <> string.inspect(error)
+    })
 
   let assert Ok(_) =
     file_body
