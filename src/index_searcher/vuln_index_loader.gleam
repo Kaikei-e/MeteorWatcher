@@ -1,7 +1,7 @@
 import collectors/actual_vulnerability_collector.{type OSVVulnerability}
 import gleam/list
 import gleam/string
-import index_searcher/models.{type VulnIndex}
+import index_searcher/models.{type VulnIndex, get_table_ref}
 
 pub fn build_index_from_target_vulnerabilities(
   index: VulnIndex,
@@ -47,8 +47,10 @@ pub fn build_index_from_target_vulnerabilities(
 }
 
 // ETS操作の外部関数
+import gleam/erlang/atom
+
 @external(erlang, "ets", "insert")
-fn ets_insert(table: String, tuple: #(String, String)) -> Bool
+fn ets_insert(table: atom.Atom, tuple: #(String, String)) -> Bool
 
 // 正規化関数
 fn normalize_package_key(
@@ -89,6 +91,6 @@ fn insert_vulnerability(
   vuln_id: String,
 ) -> Nil {
   let key = normalize_package_key(ecosystem, name, version)
-  ets_insert(models.get_table_ref(index), #(key, vuln_id))
+  ets_insert(get_table_ref(index), #(key, vuln_id))
   Nil
 }
