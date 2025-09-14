@@ -28,8 +28,8 @@ pub fn create_vuln_index() -> VulnIndex {
   let name = list_to_atom(binary_to_list("vuln_index"))
   let opt_set = list_to_atom(binary_to_list("set"))
   let opt_named_table = list_to_atom(binary_to_list("named_table"))
-  let opt_read_concurrency = list_to_atom(binary_to_list("read_concurrency"))
-  let table = ets_new(name, [opt_named_table, opt_set, opt_read_concurrency])
+  // read_concurrencyオプションを削除してシンプルにする
+  let table = ets_new(name, [opt_named_table, opt_set])
   new_vuln_index(table)
 }
 
