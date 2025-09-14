@@ -287,3 +287,80 @@ pub fn parse_empty_go_mod_test() {
     Error(_) -> should.fail()
   }
 }
+
+// ===== package-lock.jsonパーサーテスト =====
+
+pub fn parse_package_lock_json_test() {
+  let package_lock_content =
+    "{
+  \"name\": \"test-project\",
+  \"version\": \"1.0.0\",
+  \"lockfileVersion\": 2,
+  \"requires\": true,
+  \"packages\": {
+    \"\": {
+      \"name\": \"test-project\",
+      \"version\": \"1.0.0\",
+      \"dependencies\": {
+        \"axios\": \"^1.6.8\",
+        \"lodash\": \"^4.17.21\"
+      }
+    },
+    \"node_modules/axios\": {
+      \"version\": \"1.6.8\",
+      \"resolved\": \"https://registry.npmjs.org/axios/-/axios-1.6.8.tgz\",
+      \"integrity\": \"sha512-T7tXy2NwcK95txgF+DGfhw0n2MH8w4G9TKlDLU2SZqPUk/n3HJH3GVKjLqmFtIBQJkOFQEerRgCd39a08VsOxA==\",
+      \"dependencies\": {
+        \"follow-redirects\": \"^1.15.6\",
+        \"form-data\": \"^4.0.0\",
+        \"proxy-from-env\": \"^1.1.0\"
+      }
+    },
+    \"node_modules/lodash\": {
+      \"version\": \"4.17.21\",
+      \"resolved\": \"https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz\",
+      \"integrity\": \"sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==\"
+    }
+  }
+}"
+
+  // テスト用の一時ファイルを作成
+  let test_file = "/tmp/test_package-lock.json"
+  let _ = simplifile.write(test_file, package_lock_content)
+
+  let result = parse_lockfile(test_file, PackageLockJson)
+
+  // ファイルを削除
+  let _ = simplifile.delete(test_file)
+
+  case result {
+    Ok(packages) -> {
+      // パッケージが含まれていることを確認
+      case list.length(packages) > 0 {
+        True -> should.be_true(True)
+        False -> should.fail()
+      }
+
+      // axiosパッケージが含まれているかチェック
+      let axios_found =
+        packages
+        |> list.any(fn(pkg: Package) {
+          pkg.ecosystem == "npm"
+          && pkg.name == "axios"
+          && pkg.version == "1.6.8"
+        })
+      axios_found |> should.be_true()
+
+      // lodashパッケージが含まれているかチェック
+      let lodash_found =
+        packages
+        |> list.any(fn(pkg: Package) {
+          pkg.ecosystem == "npm"
+          && pkg.name == "lodash"
+          && pkg.version == "4.17.21"
+        })
+      lodash_found |> should.be_true()
+    }
+    Error(_) -> should.fail()
+  }
+}
