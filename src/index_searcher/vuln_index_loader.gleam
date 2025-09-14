@@ -46,11 +46,11 @@ pub fn build_index_from_target_vulnerabilities(
   Ok(total_count)
 }
 
-// ETS操作の外部関数（既存実装から）
+// ETS操作の外部関数
 @external(erlang, "ets", "insert")
 fn ets_insert(table: String, tuple: #(String, String)) -> Bool
 
-// 正規化関数（既存実装から）
+// 正規化関数
 fn normalize_package_key(
   ecosystem: String,
   name: String,
