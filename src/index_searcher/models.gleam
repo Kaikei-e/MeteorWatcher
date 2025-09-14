@@ -33,8 +33,16 @@ pub type AffectedPackage {
   AffectedPackage(
     package: OSVPackage,
     versions: List(String),
-    // ranges は将来実装
+    ranges: List(Range),
   )
+}
+
+pub type Range {
+  Range(range_type: String, repo: String, events: List(Event))
+}
+
+pub type Event {
+  Event(introduced: String, fixed: String)
 }
 
 pub type OSVPackage {
