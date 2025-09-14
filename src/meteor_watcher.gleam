@@ -2,17 +2,41 @@ import collectors/actual_vulnerability_collector
 import collectors/osv_collector
 import file_manager/csv_treator
 import file_manager/osv_file_manager
+import gleam/dynamic/decode
 import gleam/erlang/process
 import gleam/io
+import gleam/json
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import index_searcher/searcher
 import index_searcher/vuln_index_loader
+import simplifile
 import vuln_extractors/vuln_diff_extractors
 
+pub type TargetConfig {
+  TargetConfig(scan_targets: List(String))
+}
+
+fn load_target_config() -> Result(TargetConfig, String) {
+  use content <- result.try(
+    simplifile.read("target.json")
+    |> result.map_error(fn(_) { "Failed to read target.json" }),
+  )
+
+  let decoder = {
+    use scan_targets <- decode.field("scan_targets", decode.list(decode.string))
+    decode.success(TargetConfig(scan_targets:))
+  }
+
+  json.parse(from: content, using: decoder)
+  |> result.map_error(fn(_) { "Failed to parse target.json" })
+}
+
 pub fn main() -> Result(Nil, String) {
+  use config <- result.try(load_target_config())
+
   let result = osv_collector.osv_collector()
   let assert Ok(io_result) =
     result
@@ -76,21 +100,31 @@ pub fn main() -> Result(Nil, String) {
 
   io.println("Index built, count: " <> string.inspect(count))
 
-  let matches =
-    searcher.scan_directory_sequential(
-      index,
-      "/home/koko/Documents/dev/test-env/test",
-    )
-    |> result.map(fn(matches) { matches })
+  // 各ターゲットディレクトリをスキャン
+  let all_matches =
+    list.fold(config.scan_targets, [], fn(acc, target_dir) {
+      io.println("Scanning directory: " <> target_dir)
+      case searcher.scan_directory_sequential(index, target_dir) {
+        Ok(matches) -> {
+          io.println(
+            "Found "
+            <> string.inspect(list.length(matches))
+            <> " matches in "
+            <> target_dir,
+          )
+          list.append(acc, matches)
+        }
+        Error(e) -> {
+          io.println("Error scanning " <> target_dir <> ": " <> e)
+          acc
+        }
+      }
+    })
 
-  io.println("Matches: " <> string.inspect(matches))
-
-  // let matches =
-  //   scanner.scan_directory_parallel(index, ".", 8)
-  //   |> result.map(fn(matches) { matches })
-  //   |> result.map_error(fn(e) { io.println("Error: " <> e) })
-
-  // io.println("Matches: " <> string.inspect(matches))
+  io.println(
+    "Total matches found: " <> string.inspect(list.length(all_matches)),
+  )
+  io.println("All matches: " <> string.inspect(all_matches))
 
   Ok(Nil)
 }

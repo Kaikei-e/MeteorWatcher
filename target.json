@@ -1,0 +1,6 @@
+{
+  "scan_targets": [
+    ".",
+    "/path/to/another/project"
+  ]
+}
