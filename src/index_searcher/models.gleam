@@ -1,15 +1,17 @@
+import gleam/erlang/atom
+
 // ETSテーブル用の型
 pub opaque type VulnIndex {
-  VulnIndex(table_ref: String)
+  VulnIndex(table_ref: atom.Atom)
 }
 
 // VulnIndexのコンストラクタ関数
-pub fn new_vuln_index(table_ref: String) -> VulnIndex {
+pub fn new_vuln_index(table_ref: atom.Atom) -> VulnIndex {
   VulnIndex(table_ref)
 }
 
 // VulnIndexからtable_refを取得する関数
-pub fn get_table_ref(index: VulnIndex) -> String {
+pub fn get_table_ref(index: VulnIndex) -> atom.Atom {
   let VulnIndex(table_ref) = index
   table_ref
 }
