@@ -21,7 +21,7 @@ pub type TargetConfig {
 
 fn load_target_config() -> Result(TargetConfig, String) {
   use content <- result.try(
-    simplifile.read("target.json")
+    simplifile.read("targets.json")
     |> result.map_error(fn(_) { "Failed to read target.json" }),
   )
 
