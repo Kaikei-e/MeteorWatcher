@@ -4,14 +4,20 @@ import gleam/list
 import gleam/order
 import gleam/result
 import gleam/string
+import gleam/time/calendar
+import gleam/time/duration
+import gleam/time/timestamp
 import simplifile
 
 pub fn get_csv_files(directory_path: String) -> List(String) {
   io.println("Getting CSV files from directory: " <> directory_path)
   case simplifile.read_directory(directory_path) {
-    Ok(files) ->
-      take_latest_two_names(files)
+    Ok(files) -> {
+      let csv_files =
+        list.filter(files, fn(name) { string.ends_with(name, ".csv") })
+      take_latest_two_names(csv_files)
       |> list.map(fn(name) { directory_path <> "/" <> name })
+    }
     Error(_) -> []
   }
 }
@@ -22,28 +28,36 @@ pub fn take_latest_two_names(names: List(String)) -> List(String) {
 }
 
 pub fn get_today_date() -> String {
-  // 最新のCSVファイル名から日付を推定
-  case simplifile.read_directory("osv_vulnerabilities") {
-    Ok(files) -> {
-      let sorted_files = list.sort(files, by: fn(a, b) { string.compare(b, a) })
-      case list.first(sorted_files) {
-        Ok(latest_file) -> extract_date_from_filename(latest_file)
-        Error(_) -> "2025-09-13"
-        // フォールバック
-      }
-    }
-    Error(_) -> "2025-09-13"
-    // フォールバック
-  }
+  // gleam_timeライブラリを使用してシステム時刻から動的に今日の日付を取得
+  let now = timestamp.system_time()
+  let #(date, _time) = timestamp.to_calendar(now, calendar.utc_offset)
+  format_date_to_string(date)
 }
 
-fn extract_date_from_filename(filename: String) -> String {
-  // ファイル名形式: 2025-09-13T21_28_49.916286127Z09_00.csv
-  // から 2025-09-13 を抽出
-  case string.split(filename, on: "T") {
-    [date_part, ..] -> date_part
-    _ -> "2025-09-13"
-    // フォールバック
+fn format_date_to_string(date: calendar.Date) -> String {
+  let year_str = int.to_string(date.year)
+  let month_str = format_month_to_string(date.month)
+  let day_str = case date.day < 10 {
+    True -> "0" <> int.to_string(date.day)
+    False -> int.to_string(date.day)
+  }
+  year_str <> "-" <> month_str <> "-" <> day_str
+}
+
+fn format_month_to_string(month: calendar.Month) -> String {
+  case month {
+    calendar.January -> "01"
+    calendar.February -> "02"
+    calendar.March -> "03"
+    calendar.April -> "04"
+    calendar.May -> "05"
+    calendar.June -> "06"
+    calendar.July -> "07"
+    calendar.August -> "08"
+    calendar.September -> "09"
+    calendar.October -> "10"
+    calendar.November -> "11"
+    calendar.December -> "12"
   }
 }
 
@@ -68,25 +82,15 @@ fn is_within_week(date: String, today: String) -> Bool {
   string.compare(date, days_ago) != order.Lt
 }
 
-fn get_days_ago_date(today: String, days: Int) -> String {
-  // 簡易実装: 日付から指定日数を引く（月またぎは考慮しない）
-  case string.split(today, on: "-") {
-    [year, month, day] -> {
-      case int.parse(day) {
-        Ok(d) if d > days -> {
-          let new_day = d - days
-          let day_str = case new_day < 10 {
-            True -> "0" <> int.to_string(new_day)
-            False -> int.to_string(new_day)
-          }
-          year <> "-" <> month <> "-" <> day_str
-        }
-        _ -> "2025-09-01"
-        // フォールバック
-      }
-    }
-    _ -> "2025-09-01"
-  }
+fn get_days_ago_date(_today: String, days: Int) -> String {
+  // gleam_timeライブラリを使用して正確に指定日数前の日付を計算
+  let now = timestamp.system_time()
+  let hours_to_subtract = 24 * days
+  let past_duration = duration.hours(-hours_to_subtract)
+  let past_timestamp = timestamp.add(now, past_duration)
+  let #(date, _time) =
+    timestamp.to_calendar(past_timestamp, calendar.utc_offset)
+  format_date_to_string(date)
 }
 
 pub fn parse_and_extract_id_from_csv(file: List(String)) -> List(List(String)) {
