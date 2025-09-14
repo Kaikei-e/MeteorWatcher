@@ -1,3 +1,4 @@
+import gleam/erlang/atom
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
@@ -8,17 +9,27 @@ import index_searcher/models.{
 import index_searcher/parser.{detect_lockfile_type, parse_lockfile}
 import simplifile
 
+@external(erlang, "erlang", "binary_to_list")
+fn binary_to_list(binary: String) -> List(Int)
+
+@external(erlang, "erlang", "list_to_atom")
+fn list_to_atom(chars: List(Int)) -> atom.Atom
+
 @external(erlang, "ets", "new")
-fn ets_new(name: String, options: List(String)) -> String
+fn ets_new(name: atom.Atom, options: List(atom.Atom)) -> atom.Atom
 
 @external(erlang, "ets", "insert")
-fn ets_insert(table: String, tuple: #(String, String)) -> Bool
+fn ets_insert(table: atom.Atom, tuple: #(String, String)) -> Bool
 
 @external(erlang, "ets", "lookup")
-fn ets_lookup(table: String, key: String) -> List(#(String, String))
+fn ets_lookup(table: atom.Atom, key: String) -> List(#(String, String))
 
 pub fn create_vuln_index() -> VulnIndex {
-  let table = ets_new("vuln_index", ["set", "read_concurrency"])
+  let name = list_to_atom(binary_to_list("vuln_index"))
+  let opt_set = list_to_atom(binary_to_list("set"))
+  let opt_named_table = list_to_atom(binary_to_list("named_table"))
+  let opt_read_concurrency = list_to_atom(binary_to_list("read_concurrency"))
+  let table = ets_new(name, [opt_named_table, opt_set, opt_read_concurrency])
   new_vuln_index(table)
 }
 
