@@ -1,3 +1,6 @@
+import gleam/dict
+import gleam/dynamic/decode
+import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
@@ -206,8 +209,61 @@ fn parse_go_sum_line(line: String) -> Option(Package) {
 
 // ===== package-lock.json パーサー =====
 
-fn parse_package_lock_json(_content: String) -> Result(List(Package), String) {
-  // TODO: 実際のJSON解析
-  // 仮実装
-  Ok([])
+fn parse_package_lock_json(content: String) -> Result(List(Package), String) {
+  case json.parse(content, decode_package_lock()) {
+    Ok(packages) -> Ok(packages)
+    Error(_) -> Error("Failed to parse package-lock.json")
+  }
+}
+
+// package-lock.jsonの構造をデコード
+fn decode_package_lock() {
+  use packages <- decode.field(
+    "packages",
+    decode.dict(decode.string, decode_package_entry()),
+  )
+
+  // "packages"フィールドから全てのパッケージエントリを取得
+  let package_list =
+    packages
+    |> dict.to_list()
+    |> list.filter_map(fn(entry) {
+      let #(path, package_data) = entry
+      case extract_package_from_path(path, package_data) {
+        Some(package) -> Ok(package)
+        None -> Error(Nil)
+      }
+    })
+
+  decode.success(package_list)
+}
+
+// パッケージエントリをデコード
+fn decode_package_entry() {
+  use version <- decode.field("version", decode.optional(decode.string))
+  decode.success(version)
+}
+
+// パッケージパスからパッケージ情報を抽出
+fn extract_package_from_path(
+  path: String,
+  version_opt: Option(String),
+) -> Option(Package) {
+  case version_opt {
+    None -> None
+    Some(version) -> {
+      case string.starts_with(path, "node_modules/") {
+        True -> {
+          // "node_modules/" プレフィックスを削除
+          let package_name = string.drop_start(path, 13)
+          // ネストしたnode_modulesは除外 (例: node_modules/foo/node_modules/bar)
+          case string.contains(package_name, "/node_modules/") {
+            True -> None
+            False -> Some(Package("npm", package_name, version))
+          }
+        }
+        False -> None
+      }
+    }
+  }
 }
