@@ -99,3 +99,25 @@ pub fn version_gte(version: String, introduced: String) -> Bool {
     _, _ -> False
   }
 }
+
+// OSV形式の範囲指定（>=0 <2.4.12など）をサポート
+pub fn satisfies_range(version: String, range_spec: String) -> Bool {
+  // 簡易実装：>=0 <X.X.X 形式をパース
+  case string.contains(range_spec, ">=0") && string.contains(range_spec, "<") {
+    True -> {
+      // "<" の後のバージョンを抽出
+      let parts = string.split(range_spec, "<")
+      case parts {
+        [_, fixed_part] -> {
+          let fixed = string.trim(fixed_part)
+          version_in_range_from_zero(version, fixed)
+        }
+        _ -> False
+      }
+    }
+    False -> {
+      // その他の範囲形式（将来の拡張用）
+      False
+    }
+  }
+}
