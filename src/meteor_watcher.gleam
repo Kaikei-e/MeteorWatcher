@@ -92,7 +92,7 @@ pub fn main() -> Result(Nil, String) {
     }
     False -> {
       io.println("No new vulnerabilities found, skipping index build")
-      io.println("Happy hacking! And have a nice day!")
+      io.println("Happy hacking! Today is a nice day!")
       []
     }
   }

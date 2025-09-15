@@ -1,4 +1,5 @@
 import gleam/erlang/atom
+import gleam/option.{type Option}
 
 // ETSテーブル用の型
 pub opaque type VulnIndex {
@@ -33,9 +34,9 @@ pub type OSVVuln {
 
 pub type AffectedPackage {
   AffectedPackage(
-    package: OSVPackage,
-    versions: List(String),
-    ranges: List(Range),
+    package: Option(OSVPackage),
+    versions: Option(List(String)),
+    ranges: Option(List(Range)),
   )
 }
 

@@ -1,5 +1,6 @@
 import collectors/actual_vulnerability_collector.{type OSVVulnerability}
 import gleam/list
+import gleam/option.{Some}
 import gleam/string
 import index_searcher/models.{type VulnIndex, get_table_ref}
 
@@ -14,28 +15,34 @@ pub fn build_index_from_target_vulnerabilities(
       let vuln_count =
         list.fold(vulnerability.affected, 0, fn(pkg_acc, affected_pkg) {
           // 現在は versions のみ処理（完全一致）
-          let version_count =
-            list.fold(affected_pkg.versions, 0, fn(ver_acc, version) {
-              // ETSテーブルに (正規化キー, 脆弱性ID) を挿入
-              insert_vulnerability(
-                index,
-                affected_pkg.package.ecosystem,
-                affected_pkg.package.name,
-                version,
-                vulnerability.id,
-              )
-              ver_acc + 1
-            })
+          let version_count = case affected_pkg.package, affected_pkg.versions {
+            Some(package), Some(versions) ->
+              list.fold(versions, 0, fn(ver_acc, version) {
+                // ETSテーブルに (正規化キー, 脆弱性ID) を挿入
+                insert_vulnerability(
+                  index,
+                  package.ecosystem,
+                  package.name,
+                  version,
+                  vulnerability.id,
+                )
+                ver_acc + 1
+              })
+            _, _ -> 0
+          }
 
           // TODO: 将来実装 - ranges フィールドの処理
           // SemVer範囲（">=1.0.0, <2.0.0" 等）を展開してバージョンリストに変換
-          // let range_count = process_vulnerability_ranges(
-          //   index,
-          //   affected_pkg.ranges,
-          //   affected_pkg.package.ecosystem,
-          //   affected_pkg.package.name,
-          //   vulnerability.id
-          // )
+          // let range_count = case affected_pkg.package, affected_pkg.ranges {
+          //   Some(package), Some(ranges) -> process_vulnerability_ranges(
+          //     index,
+          //     ranges,
+          //     package.ecosystem,
+          //     package.name,
+          //     vulnerability.id
+          //   )
+          //   _, _ -> 0
+          // }
 
           pkg_acc + version_count
         })
