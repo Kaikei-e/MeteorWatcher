@@ -3,6 +3,7 @@ import gleam/list
 import gleam/option.{None, Some}
 
 /// 複数リスト中で「出現回数ちょうど1」のIDのみを返す（O(N)）
+/// 過去4日間の脆弱性リストを比較し、新しく追加された脆弱性のみを返す
 /// - 中間の flatten を作らず、二重 fold で逐次集計
 /// - 2 で飽和させる：None -> 1、Some(_) -> 2
 pub fn vuln_diff_extractors(
