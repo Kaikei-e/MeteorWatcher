@@ -136,3 +136,14 @@ pub fn prebid_exact_version_test() {
     )
   safe_result |> should.equal(None)
 }
+
+// Debian風サフィックスや接頭辞を含むバージョンの取り扱いテスト
+pub fn semver_suffix_and_prefix_handling_test() {
+  // fixed に Debian 由来のビルドメタデータが付与されても比較できること
+  // 範囲: 0 <= version < 1.8.4+dfsg-1 （実質 < 1.8.4 と等価の扱いを期待）
+  semver.version_in_range("1.8.3", "0", "1.8.4+dfsg-1") |> should.be_true()
+  semver.version_in_range("1.8.4", "0", "1.8.4+dfsg-1") |> should.be_false()
+
+  // v 接頭辞は無視されること
+  semver.version_gte("1.2.3", "v1.2.3") |> should.be_true()
+}

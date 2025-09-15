@@ -11,15 +11,19 @@ pub type Version {
 
 // バージョン文字列をパースしてVersion型に変換
 pub fn parse_version(version_str: String) -> Result(Version, String) {
-  let cleaned =
-    version_str
-    |> string.trim()
-    |> string.drop_start(case string.starts_with(version_str, "v") {
+  let trimmed = string.trim(version_str)
+  let no_prefix =
+    trimmed
+    |> string.drop_start(case string.starts_with(trimmed, "v") {
       True -> 1
       False -> 0
     })
 
-  case string.split(cleaned, ".") {
+  // Debian等のサフィックス（"+dfsg-1" など）やビルドメタデータ、
+  // 先頭の余分な文字を除外して数値部分だけを取り出す
+  let numeric_prefix = take_numeric_prefix(no_prefix)
+
+  case string.split(numeric_prefix, ".") {
     [major_str, minor_str, patch_str] -> {
       case int.parse(major_str), int.parse(minor_str), int.parse(patch_str) {
         Ok(major), Ok(minor), Ok(patch) -> Ok(Version(major, minor, patch))
@@ -40,6 +44,21 @@ pub fn parse_version(version_str: String) -> Result(Version, String) {
     }
     _ -> Error("Invalid version format")
   }
+}
+
+// 数値とドットのみが続く最初のトークン列を切り出す。
+fn take_numeric_prefix(s: String) -> String {
+  // 例: "1.8.4+dfsg-1" -> "1.8.4"
+  //     "1.2.3-rc.1"   -> "1.2.3"（プレリリースは未対応のため切り落とす）
+  let up_to_suffix = case string.split(s, "+") {
+    [head, ..] -> head
+    [] -> s
+  }
+  let up_to_hyphen = case string.split(up_to_suffix, "-") {
+    [head, ..] -> head
+    [] -> up_to_suffix
+  }
+  up_to_hyphen
 }
 
 // バージョンの比較

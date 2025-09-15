@@ -133,3 +133,61 @@ pub fn multiple_range_patterns_test() {
     searcher.lookup_vulnerability(index, "npm", "package-a", "2.0.0")
   result_safe |> should.equal(None)
 }
+
+// introduced/fixedが混在するケースや introduced のみ のケースを確認
+pub fn range_edge_cases_test() {
+  // 1) introduced のみ（未修正の脆弱性）: 1.0.0 <= version
+  let vulns = [
+    OSVVulnerability(
+      id: "TEST-RANGE-004",
+      published: "2023-01-01T00:00:00Z",
+      modified: "2023-01-01T00:00:00Z",
+      references: [],
+      affected: [
+        AffectedPackage(
+          package: Some(OSVPackage(ecosystem: "npm", name: "pkg-intro-only")),
+          versions: None,
+          ranges: Some([Range("SEMVER", [Event(Some("1.0.0"), None)])]),
+        ),
+      ],
+    ),
+    // 2) introduced と fixed の両方（境界確認）: 1.2.0 <= version < 2.4.12
+    OSVVulnerability(
+      id: "TEST-RANGE-005",
+      published: "2023-01-01T00:00:00Z",
+      modified: "2023-01-01T00:00:00Z",
+      references: [],
+      affected: [
+        AffectedPackage(
+          package: Some(OSVPackage(ecosystem: "npm", name: "pkg-bounds")),
+          versions: None,
+          ranges: Some([
+            Range("SEMVER", [
+              Event(Some("1.2.0"), None),
+              Event(None, Some("2.4.12")),
+            ]),
+          ]),
+        ),
+      ],
+    ),
+  ]
+
+  let index = searcher.create_vuln_index()
+  let assert Ok(count) =
+    vuln_index_loader.build_index_from_target_vulnerabilities(index, vulns)
+  count |> should.equal(2)
+
+  // 1) introduced のみ
+  searcher.lookup_vulnerability(index, "npm", "pkg-intro-only", "1.0.0")
+  |> should.equal(Some("TEST-RANGE-004"))
+  searcher.lookup_vulnerability(index, "npm", "pkg-intro-only", "10.0.0")
+  |> should.equal(Some("TEST-RANGE-004"))
+
+  // 2) introduced と fixed
+  searcher.lookup_vulnerability(index, "npm", "pkg-bounds", "1.2.0")
+  |> should.equal(Some("TEST-RANGE-005"))
+  searcher.lookup_vulnerability(index, "npm", "pkg-bounds", "2.4.11")
+  |> should.equal(Some("TEST-RANGE-005"))
+  searcher.lookup_vulnerability(index, "npm", "pkg-bounds", "2.4.12")
+  |> should.equal(None)
+}
