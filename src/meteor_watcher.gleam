@@ -91,62 +91,9 @@ pub fn main() -> Result(Nil, String) {
       })
     }
     False -> {
-      // テスト用のaxios脆弱性データを手動で作成（実際のnpmエコシステムデータに基づく）
-      io.println(
-        "No new vulnerabilities found, creating test axios vulnerability for npm ecosystem",
-      )
-      [
-        actual_vulnerability_collector.OSVVulnerability(
-          "GHSA-4hjh-wcwx-xvwj",
-          "2025-09-11T21:07:55Z",
-          "2025-09-11T21:44:40.683403Z",
-          [],
-          [
-            actual_vulnerability_collector.AffectedPackage(
-              actual_vulnerability_collector.OSVPackage("npm", "axios"),
-              [
-                "1.6.8",
-                "1.6.7",
-                "1.6.6",
-                "1.6.5",
-                "1.6.4",
-                "1.6.3",
-                "1.6.2",
-                "1.6.1",
-                "1.6.0",
-                "1.5.1",
-                "1.5.0",
-                "1.4.0",
-                "1.3.6",
-                "1.3.5",
-                "1.3.4",
-                "1.3.3",
-                "1.3.2",
-                "1.3.1",
-                "1.3.0",
-                "1.2.6",
-                "1.2.5",
-                "1.2.4",
-                "1.2.3",
-                "1.2.2",
-                "1.2.1",
-                "1.2.0",
-                "1.1.3",
-                "1.1.2",
-                "1.1.1",
-                "1.1.0",
-                "1.0.0",
-                "0.28.1",
-                "0.28.0",
-                "0.27.2",
-                "0.27.1",
-                "0.27.0",
-              ],
-              [],
-            ),
-          ],
-        ),
-      ]
+      io.println("No new vulnerabilities found, skipping index build")
+      io.println("Happy hacking! And have a nice day!")
+      []
     }
   }
 
@@ -199,6 +146,7 @@ pub fn main() -> Result(Nil, String) {
         )
         io.println("🏷️  Ecosystem: " <> match.package.ecosystem)
         io.println("🆔 Vulnerability ID: " <> match.vuln_id)
+        io.println("☠ Severity: " <> match.vuln_id)
         io.println("📁 File: " <> match.file_path)
         io.println("-" |> string.repeat(40))
       })
