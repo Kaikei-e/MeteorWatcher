@@ -25,6 +25,20 @@ gleam run fetch
 
 > HTTP is implemented with `gleam_httpc`. Filesystem walking will use `fswalk`. ([HexDocs][2])
 
+### Database (Docker Compose)
+
+```bash
+# Start local Postgres (LTS)
+docker compose up -d postgres
+
+# Check status/health
+docker compose ps
+```
+
+- DSN: `postgres://meteor:meteor@localhost:5432/meteor_watcher`
+- Config: copy `.env.example` to `.env` to override `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, or `DATABASE_URL`.
+- Init: schema is applied from `db/init/` on first start; data persists in the `db-data` volume. See `compose.yaml`.
+
 ## Planned scanning (MVP)
 
 1. **Collect patterns** from advisory JSON: for each `affected[].package` take `(ecosystem, name)` and any explicit `versions`. (OSV: a version is affected if it’s within any `ranges` or listed in `versions`.) ([OSSF][3])
