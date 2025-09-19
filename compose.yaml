@@ -12,6 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meteor}
       POSTGRES_DB: ${POSTGRES_DB:-meteor_watcher}
       DATABASE_URL: postgres://${POSTGRES_USER:-meteor}:${POSTGRES_PASSWORD:-meteor}@postgres:5432/${POSTGRES_DB:-meteor_watcher}
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
     tmpfs:
       - /app/build:rw,size=256m,mode=1777
     depends_on:
