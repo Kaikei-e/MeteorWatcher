@@ -1,0 +1,39 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    user: "${LOCAL_UID}:${LOCAL_GID}"
+    volumes:
+      - ./:/app
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-meteor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meteor}
+      POSTGRES_DB: ${POSTGRES_DB:-meteor_watcher}
+      DATABASE_URL: postgres://${POSTGRES_USER:-meteor}:${POSTGRES_PASSWORD:-meteor}@postgres:5432/${POSTGRES_DB:-meteor_watcher}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >-
+      sh -lc "gleam deps download && gleam run"
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-meteor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-meteor}
+      POSTGRES_DB: ${POSTGRES_DB:-meteor_watcher}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meteor} -d ${POSTGRES_DB:-meteor_watcher}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
