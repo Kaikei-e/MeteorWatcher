@@ -5,3 +5,5 @@ erl_crash.dump
 osv_vulnerabilities/
 
 targets.json
+
+.env
