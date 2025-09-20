@@ -1,5 +1,6 @@
 import collectors/actual_vulnerability_collector
 import collectors/osv_collector
+import datastore/db_driver
 import file_manager/csv_treator
 import file_manager/osv_file_manager
 import gleam/dynamic/decode
@@ -12,6 +13,7 @@ import gleam/result
 import gleam/string
 import index_searcher/searcher
 import index_searcher/vuln_index_loader
+import pog.{type Message}
 import simplifile
 import vuln_extractors/vuln_diff_extractors
 
@@ -36,6 +38,9 @@ fn load_target_config() -> Result(TargetConfig, String) {
 
 pub fn main() -> Result(Nil, String) {
   use config <- result.try(load_target_config())
+
+  let pool_name: process.Name(Message) = process.new_name("db_supervisor")
+  let assert Ok(_) = db_driver.create_db_supervisor(pool_name)
 
   let result = osv_collector.osv_collector()
   let assert Ok(io_result) =
